@@ -10,11 +10,14 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 
-public class GameScreen implements Screen {
-	final PopRocket game;
+public class GameScreen implements Screen {	
+    
+//	final SqliteConn db;  
 	
 	static final int WORLD_WIDTH  = 1000;
 	static final int WORLD_HEIGHT = 1000;
+	
+	final PopRocket game;
 
 	private OrthographicCamera cam;
 	private SpriteBatch batch;
@@ -23,12 +26,20 @@ public class GameScreen implements Screen {
 	private float rotationSpeed;
 	private float h_spd = 2, v_spd = 2;
 	
+	private Estrela estrelas[];
+	
 	
 	public GameScreen (final PopRocket gam) {
 		this.game = gam;
 		
+//		this.db = new SqliteConn();
+//		this.db.criaTabelas();
+		
 		rotationSpeed = 0.1f;
-
+		
+		
+		estrelas = criaObjetos.Estrelas(30);
+		
 		mapSprite1 = new Sprite(new Texture(Gdx.files.internal("img/bkg.png")));
 		mapSprite1.setPosition(0, 0);
 		mapSprite1.setSize(WORLD_WIDTH, WORLD_HEIGHT);
@@ -38,7 +49,7 @@ public class GameScreen implements Screen {
 		mapSprite2.setSize(WORLD_WIDTH, WORLD_HEIGHT);
 		
 		rocket = new Sprite(new Texture(Gdx.files.internal("img/rocket0.png")));
-		rocket.setPosition(Gdx.graphics.getWidth() / 2f, 10);
+		rocket.setPosition(WORLD_WIDTH / 2f, 10);
 		rocket.setSize(50,25);
 		
 
@@ -75,7 +86,11 @@ public class GameScreen implements Screen {
 
 		batch.begin();
 		mapSprite1.draw(batch);
-		mapSprite2.draw(batch);
+		mapSprite2.draw(batch);		
+		
+		for (int i = 0; i < estrelas.length; i++ ) {
+			estrelas[i].draw(batch);			
+		}		
 		rocket.draw(batch);
 		batch.end();	
 	}
@@ -120,8 +135,11 @@ public class GameScreen implements Screen {
 		float effectiveViewportWidth  = cam.viewportWidth * cam.zoom;
 		float effectiveViewportHeight = cam.viewportHeight * cam.zoom;	
 				
-		cam.position.x = MathUtils.clamp(rocket.getX(), effectiveViewportWidth  / 2f, WORLD_HEIGHT - effectiveViewportWidth  / 2f);
-		cam.position.y = MathUtils.clamp(rocket.getY(), effectiveViewportHeight / 2f, WORLD_HEIGHT - effectiveViewportHeight / 2f);		
+//		cam.position.x = MathUtils.clamp(rocket.getX(), effectiveViewportWidth  / 2f, WORLD_HEIGHT - effectiveViewportWidth  / 2f);
+//		cam.position.y = MathUtils.clamp(rocket.getY(), effectiveViewportHeight / 2f, WORLD_HEIGHT - effectiveViewportHeight / 2f);
+		
+		cam.position.x = rocket.getX()+50;
+		cam.position.y = MathUtils.clamp(rocket.getY(), effectiveViewportHeight / 2f, WORLD_HEIGHT - effectiveViewportHeight / 2f);	
 	}
 	
 	

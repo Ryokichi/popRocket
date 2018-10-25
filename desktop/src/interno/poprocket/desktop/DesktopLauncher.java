@@ -11,8 +11,8 @@ public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		new LwjglApplication(new PopRocket(), config);
-		config.title = "PopRocket";
-		config.width = Gdx.graphics.getWidth();
+		config.title  = "PopRocket";
+		config.width  = Gdx.graphics.getWidth();
 		config.height = Gdx.graphics.getHeight();
 	}
 }
