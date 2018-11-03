@@ -1,4 +1,5 @@
-package interno.poprocket;
+package interno.db;
+
 import java.net.URL;
 import java.sql.*;
 
