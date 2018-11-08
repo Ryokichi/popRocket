@@ -28,21 +28,28 @@ public class GameScreen implements Screen {
 	
 	private float rotationSpeed;
 	private float h_spd = 0f, v_spd = 0f;
-	private float gravidade = 0.1f;	
+	private float gravidade = 0.5f;
 	
-	private Sprite  asteroides[];
+	private double dist_percorrida = 0;
+
+	
+	
+	private Sprite  asteroides[], estrelas[], nuvens[], nuvens_fundo[];
 	private Sprite  mapSprite1, mapSprite2;
 	private Rocket  rocket;
 	
 	
-	public GameScreen (final PopRocket gam) {
+	public GameScreen (final PopRocket game) {
 		//this.db = new SqliteConn();
 		//this.db.criaTabelas();
 		
-		this.game = gam;
+		this.game = game;
 		
 		rotationSpeed = 0.8f;	
-		asteroides = criaObjetos.Asteroides(30);
+		asteroides = criaObjetos.Asteroides(10);
+		estrelas   = criaObjetos.Estrelas(20); 
+		nuvens     = criaObjetos.Nuvens(80);
+		
 		
 		mapSprite1 = new Sprite(new Texture(Gdx.files.internal("img/bkg.png")));
 		mapSprite1.setPosition(0, 0);
@@ -83,15 +90,23 @@ public class GameScreen implements Screen {
 		batch.begin();
 		mapSprite1.draw(batch);
 		mapSprite2.draw(batch);
+		
+		for (int i = 0; i < nuvens.length; i++ ) {			
+			nuvens[i].draw(batch);			
+		}
+		
 		for (int i = 0; i < asteroides.length; i++ ) {			
 			asteroides[i].draw(batch);			
 		}
 		
+		for (int i = 0; i < estrelas.length; i++ ) {			
+			estrelas[i].draw(batch);			
+		}		
 		rocket.draw(batch);
 		batch.end();	
 	}	
 	
-	private void handleInput(float delta) {
+	private void handleInput(float dt) {
 		if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
 			cam.zoom = 0;
 		}
@@ -122,12 +137,14 @@ public class GameScreen implements Screen {
 			rocket.rotate(-rotationSpeed);
 		}
 		if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-			float sen, cos;
-			sen = MathUtils.sinDeg(rocket.getRotation() * 1f);
-			cos = MathUtils.cosDeg(rocket.getRotation() * 1f);
-			
-			h_spd = h_spd + rocket.acel * cos * delta;
-			v_spd = v_spd + rocket.acel * sen * delta;
+			rocket.acelerar(dt);
+//			float sen, cos;
+//			sen = MathUtils.sinDeg(rocket.getRotation() * 1f);
+//			cos = MathUtils.cosDeg(rocket.getRotation() * 1f);
+//			
+//			
+//			h_spd = (float)(h_spd + rocket.acel * cos * delta);
+//			v_spd = (float)(v_spd + rocket.acel * sen * delta);
 		}
 
 		cam.zoom = MathUtils.clamp(cam.zoom, 4f, WORLD_WIDTH/cam.viewportWidth);		
@@ -174,16 +191,28 @@ public class GameScreen implements Screen {
 	}
 	
 	private void checkLimitsForRocket (float dt) {
-		h_spd = h_spd * (1 - MathUtils.sinDeg(rocket.getRotation()) * rocket.arrasto * dt);
-		v_spd = v_spd - gravidade * dt;
+		dist_percorrida += h_spd * dt;
 		
+		h_spd = rocket.vel_x;
+		v_spd = rocket.vel_y;
+		
+		rocket.atualizaVelocidades(dt, h_spd, v_spd, gravidade);
+		rocket.setVelocidadeVetorial(h_spd, v_spd);	
+		
+		
+//		h_spd = (float)(h_spd * (1 - MathUtils.sinDeg(rocket.getRotation()) * rocket.arrasto * dt));
+//		v_spd = v_spd - gravidade * dt;
+	
 		////Limites X e Y de mapa
 		if (rocket.getY() < 10) {
-			rocket.setY(10);
+			rocket.setY(10);			
+			rocket.setVelY(0);
 			v_spd = 0;
 		}
 		if (rocket.getY() > WORLD_HEIGHT-50) {
-			rocket.setY(WORLD_HEIGHT-50);
+			rocket.setY(WORLD_HEIGHT-50);			
+			rocket.setVelY(0);
+			v_spd = 0;
 		}
 		
 		////Limites de velocidade
@@ -217,7 +246,27 @@ public class GameScreen implements Screen {
 				asteroides[i].setPosition(x, y);
 			}
 			else {
-				asteroides[i].translateX(-h_spd*1.1f);	
+				asteroides[i].translateX(-h_spd*0.9f);	
+			}			
+		}
+		
+		for (int i=0; i<estrelas.length; i++) {
+			if (estrelas[i].getX() < -50) {
+				float x = MathUtils.random(WORLD_WIDTH+50, 2*WORLD_WIDTH);
+				float y = MathUtils.random(100, WORLD_HEIGHT);
+				estrelas[i].setPosition(x, y);
+			}
+			else {
+				estrelas[i].translateX(-h_spd*1.2f);	
+			}			
+		}
+		
+		for (int i=0; i<nuvens.length; i++) {
+			if (nuvens[i].getX() < -50) {				
+				nuvens[i].setX(WORLD_WIDTH + 50);
+			}
+			else {
+				nuvens[i].translateX(-h_spd);	
 			}			
 		}
 	}
