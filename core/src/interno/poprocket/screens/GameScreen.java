@@ -20,6 +20,7 @@ public class GameScreen implements Screen {
     MinhasFuncoes mf = new MinhasFuncoes();
     static final int WORLD_HEIGHT = 5000;
 	static final int WORLD_WIDTH  = 1000;
+	static final int MAX_VEL = 5;
 	
 	
 	final PopRocket game;
@@ -28,10 +29,11 @@ public class GameScreen implements Screen {
 	private SpriteBatch batch, batch2;
 	
 	private double dist_percorrida = 0;	
-	private double gravidade = 10;
+	private double gravidade = 4;
 	private float rotationSpeed;	
 	private float h_spd = 0f;
-	private float v_spd = 0f;	
+	private float v_spd = 0f;
+    private int   score = 0;
 	
 	private Sprite  asteroides[], estrelas[], nuvens[], nuvens_fundo[];
 	private Sprite  mapSprite1, mapSprite2;
@@ -46,14 +48,13 @@ public class GameScreen implements Screen {
 		//this.db = new SqliteConn();
 		//this.db.criaTabelas();
 		
-		this.game = game;		
-		font     = new BitmapFont();		
+		this.game = game;
 		
+		font          = new BitmapFont();		
 		rotationSpeed = 0.8f;	
-		asteroides = criaObjetos.Asteroides(10);
-		estrelas   = criaObjetos.Estrelas(20); 
-		nuvens     = criaObjetos.Nuvens(80);
-		
+		asteroides    = criaObjetos.Asteroides(10);
+		estrelas      = criaObjetos.Estrelas(100); 
+		nuvens        = criaObjetos.Nuvens(80);		
 		
 		mapSprite1 = new Sprite(new Texture(Gdx.files.internal("img/bkg.png")));
 		mapSprite1.setPosition(0, 0);
@@ -76,7 +77,7 @@ public class GameScreen implements Screen {
 		cam.position.set(cam.viewportWidth / 2f, cam.viewportHeight / 2f, 0);		
 		cam.update();
 
-		batch = new SpriteBatch();
+		batch  = new SpriteBatch();
 		batch2 = new SpriteBatch();
 	}
 	
@@ -86,40 +87,60 @@ public class GameScreen implements Screen {
 		////Funções auxiliares
 		handleInput(dt);
 		updateObjPos();
+		checkObjCollision();
 		checkLimitsForRocket(dt);
 				
 		cam.update();
 		batch.setProjectionMatrix(cam.combined);
 				
 		batch.begin();
-		mapSprite1.draw(batch);
-		mapSprite2.draw(batch);	
+			mapSprite1.draw(batch);
+			mapSprite2.draw(batch);	
 		
-		for (int i = 0; i < nuvens.length; i++ ) {			
-			nuvens[i].draw(batch);			
-		}
+			for (int i = 0; i < nuvens.length; i++ ) {			
+				nuvens[i].draw(batch);			
+			}	
 		
-		for (int i = 0; i < asteroides.length; i++ ) {			
-			asteroides[i].draw(batch);			
-		}
+			for (int i = 0; i < asteroides.length; i++ ) {			
+				asteroides[i].draw(batch);			
+			}
 		
-		for (int i = 0; i < estrelas.length; i++ ) {			
-			estrelas[i].draw(batch);			
-		}		
-		rocket.draw(batch);
+			for (int i = 0; i < estrelas.length; i++ ) {			
+				estrelas[i].draw(batch);			
+			}		
+			rocket.draw(batch);
 		batch.end();
 
-		batch2.begin();
-        str = "Altura: " + rocket.getY();
-		font.draw(batch2, str, 1000*0.01f, 600*0.99f);
-		str = "Vel_X : " + rocket.getVelX();
-		font.draw(batch2, str, 1000*0.01f, 600*0.96f);
-		str = "Vel_Y :" + rocket.getVelY();
-		font.draw(batch2, str, 1000*0.01f, 600*0.93f);
+		this.imprimeTextos();
 		
-		System.out.println(Gdx.graphics.getWidth());
-		batch2.end();
-	}	
+	}
+	
+	private void imprimeTextos() {
+		batch2.begin();
+//		str = "Dist  : " + dist_percorrida;
+//        font.draw(batch2, str, 1000*0.01f, 600*0.99f);
+        str = "Altura: " + rocket.getY();
+        font.draw(batch2, str, 1000*0.01f, 470*0.99f);
+        str = "Vel_abs:" + rocket.getVelocidadeAbs();
+        font.draw(batch2, str, 1000*0.01f, 470*0.96f);        
+        str = "Vel_X : " + rocket.getVelX();
+        font.draw(batch2, str, 1000*0.01f, 470*0.93f);
+        str = "Vel_Y : " + rocket.getVelY();
+        font.draw(batch2, str, 1000*0.01f, 470*0.90f);
+
+        str = "Sust : " + rocket.sustentacao();
+        font.draw(batch2, str, 1000*0.01f, 470*0.87f);        
+        str = "Drag X : " + rocket.arrastoX();
+        font.draw(batch2, str, 1000*0.01f, 470*0.84f);        
+        str = "Drag Y : " + rocket.arrastoY();
+        font.draw(batch2, str, 1000*0.01f, 470*0.81f);
+        
+        str = "Dist  : " + dist_percorrida;
+        font.draw(batch2, str, 1000*0.4f, 470*0.99f);
+        str = "Score: " + this.score;
+        font.draw(batch2, str, 1000*0.4f, 470*0.96f);
+	    batch2.end();
+	}
 	
 	private void handleInput(float dt) {
 		if (Gdx.input.isKeyPressed(Input.Keys.L)) {
@@ -161,7 +182,7 @@ public class GameScreen implements Screen {
 		}
 
 //		cam.zoom = MathUtils.clamp(cam.zoom, 4f, WORLD_WIDTH/cam.viewportWidth);
-		cam.zoom = (float) MathUtils.clamp(WORLD_WIDTH/cam.viewportWidth, 5f, WORLD_WIDTH/cam.viewportWidth);
+		cam.zoom = (float) MathUtils.clamp(cam.zoom, 10f, WORLD_WIDTH/cam.viewportWidth);
 
 		//float effectiveViewportWidth  = cam.viewportWidth * cam.zoom;
 		float effectiveViewportHeight = cam.viewportHeight * cam.zoom;	
@@ -205,32 +226,32 @@ public class GameScreen implements Screen {
 	}
 	
 	private void checkLimitsForRocket (float dt) {
-		dist_percorrida += h_spd * dt;
-		
-		h_spd = (float)rocket.getVelX();
-		v_spd = (float)rocket.getVelY();
+		dist_percorrida += h_spd * dt;		
 		
 		rocket.atualizaVelocidades(dt, gravidade);	
 			
 		////Limites X e Y de mapa
-		if (rocket.getY() < 10) {
-			rocket.setY(10);			
-			rocket.setVelY(0);
-			rocket.setRotation(0);
-			rocket.setVelY(0);
+		if (rocket.getY() < 20) {
+			rocket.setY(20);			
+			rocket.setVelY(0);						
+			rocket.setVelX(h_spd*0.8 - 0.02);
+			if (rocket.getX() < 0.02) {
+				rocket.setRotation(0);
+			}
 		}
 		if (rocket.getY() > WORLD_HEIGHT-50) {
-			rocket.setY(WORLD_HEIGHT-50);			
-			rocket.setVelY(0);
+			rocket.setY(WORLD_HEIGHT-50);
 			rocket.setRotation(0);
-			rocket.setVelY(0);
 		}
-		
+
 		////Limites de velocidade
-		if (v_spd < -20) rocket.setVelY(-20);
-		if (v_spd >  40) rocket.setVelY( 40);
-		if (h_spd <   0) rocket.setVelX(  0);		
-		if (h_spd >  40) rocket.setVelX( 40);
+		h_spd = (float)rocket.getVelX();
+		v_spd = (float)rocket.getVelY();
+		
+		if (v_spd < -MAX_VEL) rocket.setVelY(-MAX_VEL);
+		if (v_spd >  MAX_VEL) rocket.setVelY( MAX_VEL);
+		if (h_spd <        0) rocket.setVelX(0);		
+		if (h_spd > MAX_VEL*1.5) rocket.setVelX(MAX_VEL*1.5);
 		
 		////Limites de angulo		
 		if (rocket.getRotation() >  60) rocket.setRotation( 60);
@@ -278,6 +299,30 @@ public class GameScreen implements Screen {
 			else {
 				nuvens[i].translateX(-h_spd);	
 			}			
+		}
+	}
+
+	
+	private void checkObjCollision() {
+		for (int i=0; i<estrelas.length; i++) {
+			if (rocket.getBoundingRectangle().overlaps(estrelas[i].getBoundingRectangle())){
+				score = score + 1;
+				float x = MathUtils.random(WORLD_WIDTH+50, 2*WORLD_WIDTH);
+				float y = MathUtils.random(100, WORLD_HEIGHT);
+				estrelas[i].setPosition(x, y);
+			}
+		}
+		for (int i=0; i<asteroides.length; i++) {
+			if (rocket.getBoundingRectangle().overlaps(asteroides[i].getBoundingRectangle())) {
+				score = score -1;
+				float x = MathUtils.random(WORLD_WIDTH+50, 2*WORLD_WIDTH);
+				float y = MathUtils.random(100, WORLD_HEIGHT);
+				asteroides[i].setPosition(x, y);
+				if (score < 0)
+				{
+					score = 0;
+				}
+			}
 		}
 	}
 

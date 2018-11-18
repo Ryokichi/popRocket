@@ -13,12 +13,12 @@ public class Rocket extends Sprite {
 	private double vel_x   = 0;
 	private double vel_y   = 0;
     private double vel_abs = 0;
-	private double acel    = 20;	
-	private double coef_d  = 0.10;  ////coeficiente de arrasto  (Drag)
-	private double coef_l  = 1.5;   ////coeficiente de sustentação (Lift)
-	private double rho     = 1.225; ////densidade do ar
-	private double Af      = 0.3;     ////área frontal do foguete
-	private double As      = 0.5;     ////área superior do foguete   
+	private double acel    = 6;	
+	private double coef_d  = 0;   ////coeficiente de arrasto  (Drag)
+	private double coef_l  = 0.07;      ////coeficiente de sustentação (Lift)
+	private double rho     = 2;  ////densidade do ar
+	private double Af      = 0.02;    ////área frontal do foguete
+	private double As      = 0.6;    ////área superior do foguete   
 	
 	public Rocket() {
 		super(new Texture(Gdx.files.internal("img/rocket0.png")));
@@ -29,11 +29,13 @@ public class Rocket extends Sprite {
 		vel_y += acel * MathUtils.sinDeg(this.getRotation()) * dt;		
 	}
 	
-	public void atualizaVelocidades(float dt, double gravidade) {		
-		vel_x = vel_x - this.arrastoX() * dt;
+	public void atualizaVelocidades(float dt, double gravidade) {
+		double cos  = MathUtils.cosDeg(this.getRotation());
+		double sin  = MathUtils.sinDeg(this.getRotation());
 		
-		System.out.println(this.arrastoY());
-		vel_y = vel_y + (this.sustentacao() - this.arrastoY() - gravidade) * dt ;
+		vel_x = vel_x ;
+		vel_y = vel_y + (this.sustentacao() - gravidade)*dt ;
+		this.updatetVelocidadeAbs();
 	}
 	
 	public void setVelocidade (double x, double y) {
@@ -50,22 +52,18 @@ public class Rocket extends Sprite {
 	}
 	
 	public double getVelX() {
-		return Math.round(vel_x);
+		return vel_x;
 	}
 	
 	public double getVelY() {
-		return Math.round(vel_y);
+		return vel_y;
 	}	
 	
 	public void setAceleracao(double a) {
 		acel = a;
 	}
 	
-	private void setVelocidadeVetorial () {		
-		vel_abs = Math.sqrt(Math.pow(vel_x, 2) + Math.pow(vel_y, 2));
-	}
-	
-	public double getVelocidadeVetorial() {
+	public double getVelocidadeAbs() {
 		return vel_abs;
 	}
 	
@@ -73,35 +71,36 @@ public class Rocket extends Sprite {
 		return vel_abs;
 	}
 	
-	private double sustentacao() {
-		double fl  = 0;  ////force lift
-		double cos = MathUtils.cosDeg(this.getRotation());
-		double sin = MathUtils.sinDeg(this.getRotation());	
-		
-		this.setVelocidadeVetorial();
-		fl = coef_l * rho/2 * (As*sin) * Math.pow(vel_x, 2);
-		
+	public void updatetVelocidadeAbs () {		
+		vel_abs = Math.sqrt(Math.pow(vel_x, 2) + Math.pow(vel_y, 2));
+	}
+	
+	public double sustentacao() {
+		double fl   = 0;  ////force lift
+		double cos  = MathUtils.cosDeg(this.getRotation());
+		double sin  = MathUtils.sinDeg(this.getRotation());
+				
+//		fl = coef_l * rho/2 * As * Math.pow(vel_x, 2);
+		fl = coef_l * As * Math.pow(vel_x, 2);	
 	    return fl;
 	}
 	
-	private double arrastoX() {
-		double fd  = 0;  ////force drag
-		double cos = MathUtils.cosDeg(this.getRotation());
-		double sin = MathUtils.sinDeg(this.getRotation());	
-		
-		this.setVelocidadeVetorial();
-		fd = coef_d * rho/2 * Af * Math.pow(vel_x, 2);		
-	    return fd;
-	}
-	
-	private double arrastoY() {
+	public double arrastoX() {
 		double fd  = 0;  ////force drag
 		double cos = MathUtils.cosDeg(this.getRotation());
 		double sin = MathUtils.sinDeg(this.getRotation());
-		double up_down = (vel_y > 0) ? 1 : -1; 
 		
-    	this.setVelocidadeVetorial();
-		fd = coef_d * rho/2 * As * Math.pow(vel_y, 2);
+		fd = coef_d * rho/2 * (Af)*(1 + sin) * Math.pow(vel_x*cos, 2);		
+	    return fd;
+	}
+	
+	public double arrastoY() {
+		double fd  = 0;  ////force drag
+		double cos = MathUtils.cosDeg(this.getRotation());
+		double sin = MathUtils.sinDeg(this.getRotation());
+		double up_down = (vel_y > 0) ? 1 : -1;
+	
+		fd = coef_d * rho/2 * As * Math.pow(vel_y*cos, 2);
 	    return fd * up_down;
 	}
 }
