@@ -1,6 +1,9 @@
 package interno.poprocket.objetos;
 
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
@@ -8,8 +11,6 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.MathUtils;
 
 public class Rocket extends Sprite {	
-	DecimalFormat df = new DecimalFormat("###.##");
-		
 	private double vel_x   = 0;
 	private double vel_y   = 0;
     private double vel_abs = 0;
@@ -18,10 +19,17 @@ public class Rocket extends Sprite {
 	private double coef_l  = 0.07;      ////coeficiente de sustentação (Lift)
 	private double rho     = 2;  ////densidade do ar
 	private double Af      = 0.02;    ////área frontal do foguete
-	private double As      = 0.6;    ////área superior do foguete   
+	private double As      = 0.6;    ////área superior do foguete
+	
+	private NumberFormat nf = NumberFormat.getInstance(Locale.US);
 	
 	public Rocket() {
 		super(new Texture(Gdx.files.internal("img/rocket0.png")));
+		
+	    nf.setMaximumFractionDigits(2);
+	    nf.setMinimumFractionDigits(2);
+	    nf.setMaximumIntegerDigits(2);
+	    nf.setRoundingMode(RoundingMode.HALF_UP);
 	}
 	
 	public void acelerar(float dt) {
@@ -52,11 +60,11 @@ public class Rocket extends Sprite {
 	}
 	
 	public double getVelX() {
-		return vel_x;
+		return Double.valueOf(nf.format(vel_x));
 	}
 	
 	public double getVelY() {
-		return vel_y;
+		return Double.valueOf(nf.format(vel_y));
 	}	
 	
 	public void setAceleracao(double a) {
@@ -64,11 +72,11 @@ public class Rocket extends Sprite {
 	}
 	
 	public double getVelocidadeAbs() {
-		return vel_abs;
+		return Double.valueOf(nf.format(vel_abs));
 	}
 	
 	public double getVelocidade() {
-		return vel_abs;
+		return Double.valueOf(nf.format(vel_abs));
 	}
 	
 	public void updatetVelocidadeAbs () {		
@@ -82,7 +90,7 @@ public class Rocket extends Sprite {
 				
 //		fl = coef_l * rho/2 * As * Math.pow(vel_x, 2);
 		fl = coef_l * As * Math.pow(vel_x, 2);	
-	    return fl;
+	    return Double.valueOf(nf.format(fl));
 	}
 	
 	public double arrastoX() {
@@ -91,7 +99,7 @@ public class Rocket extends Sprite {
 		double sin = MathUtils.sinDeg(this.getRotation());
 		
 		fd = coef_d * rho/2 * (Af)*(1 + sin) * Math.pow(vel_x*cos, 2);		
-	    return fd;
+	    return Double.valueOf(nf.format(fd));
 	}
 	
 	public double arrastoY() {
@@ -101,6 +109,6 @@ public class Rocket extends Sprite {
 		double up_down = (vel_y > 0) ? 1 : -1;
 	
 		fd = coef_d * rho/2 * As * Math.pow(vel_y*cos, 2);
-	    return fd * up_down;
+	    return Double.valueOf(nf.format(fd * up_down));
 	}
 }

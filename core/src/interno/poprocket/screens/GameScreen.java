@@ -1,5 +1,9 @@
 package interno.poprocket.screens;
 
+import java.math.RoundingMode;
+import java.text.NumberFormat;
+import java.util.Locale;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
@@ -21,6 +25,7 @@ public class GameScreen implements Screen {
     static final int WORLD_HEIGHT = 5000;
 	static final int WORLD_WIDTH  = 1000;
 	static final int MAX_VEL = 5;
+	static final float ALT_CHAO = 8f;
 	
 	
 	final PopRocket game;
@@ -30,13 +35,13 @@ public class GameScreen implements Screen {
 	
 	private double dist_percorrida = 0;	
 	private double gravidade = 4;
-	private float rotationSpeed;	
-	private float h_spd = 0f;
-	private float v_spd = 0f;
-    private int   score = 0;
+	private float  rotationSpeed;	
+	private float  h_spd = 0f;
+	private float  v_spd = 0f;
+    private int    score = 0;
 	
 	private Sprite  asteroides[], estrelas[], nuvens[], nuvens_fundo[];
-	private Sprite  mapSprite1, mapSprite2;
+	private Sprite  mapSprite0, mapSprite1, mapSprite2;
 	private Rocket  rocket;
 	
 	private BitmapFont font;
@@ -45,29 +50,31 @@ public class GameScreen implements Screen {
 	
 	
 	public GameScreen (final PopRocket game) {
-		//this.db = new SqliteConn();
-		//this.db.criaTabelas();
-		
 		this.game = game;
 		
 		font          = new BitmapFont();		
 		rotationSpeed = 0.8f;	
 		asteroides    = criaObjetos.Asteroides(10);
 		estrelas      = criaObjetos.Estrelas(100); 
-		nuvens        = criaObjetos.Nuvens(80);		
+		nuvens        = criaObjetos.Nuvens(80);
+		nuvens_fundo  = criaObjetos.NuvensFundo(60);
+		
+		mapSprite0 = new Sprite(new Texture(Gdx.files.internal("img/bkg2.png")));
+		mapSprite0.setPosition(0, 0);
+		mapSprite0.setSize(WORLD_WIDTH, WORLD_HEIGHT);
 		
 		mapSprite1 = new Sprite(new Texture(Gdx.files.internal("img/bkg.png")));
 		mapSprite1.setPosition(0, 0);
-		mapSprite1.setSize(WORLD_WIDTH, WORLD_HEIGHT);
+		mapSprite1.setSize(WORLD_WIDTH+10, WORLD_HEIGHT/19);
 		
 		mapSprite2 = new Sprite(new Texture(Gdx.files.internal("img/bkg.png")));
 		mapSprite2.setPosition(WORLD_WIDTH-2, 0);
-		mapSprite2.setSize(WORLD_WIDTH, WORLD_HEIGHT);
+        mapSprite2.setSize(WORLD_WIDTH+10, WORLD_HEIGHT/19);
 		
 		rocket = new Rocket();
 		rocket.setPosition(WORLD_WIDTH / 2f, 10);
-		rocket.setSize(40,20);
-		rocket.setOrigin(5, 5);		
+		rocket.setSize(50,20);
+		rocket.setOrigin(0,10);		
 
 		// Constructs a new OrthographicCamera, using the given viewport width and height
 		// Height is multiplied by aspect ratio.
@@ -94,9 +101,14 @@ public class GameScreen implements Screen {
 		batch.setProjectionMatrix(cam.combined);
 				
 		batch.begin();
+		    mapSprite0.draw(batch);
 			mapSprite1.draw(batch);
 			mapSprite2.draw(batch);	
 		
+			for (int i = 0; i < nuvens_fundo.length; i++ ) {			
+				nuvens_fundo[i].draw(batch);			
+			}
+			
 			for (int i = 0; i < nuvens.length; i++ ) {			
 				nuvens[i].draw(batch);			
 			}	
@@ -139,7 +151,7 @@ public class GameScreen implements Screen {
         font.draw(batch2, str, 1000*0.4f, 470*0.99f);
         str = "Score: " + this.score;
         font.draw(batch2, str, 1000*0.4f, 470*0.96f);
-	    batch2.end();
+        batch2.end();
 	}
 	
 	private void handleInput(float dt) {
@@ -180,6 +192,9 @@ public class GameScreen implements Screen {
 		if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
 			rocket.acelerar(dt);
 		}
+		if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
+			Gdx.app.exit();
+		}
 
 //		cam.zoom = MathUtils.clamp(cam.zoom, 4f, WORLD_WIDTH/cam.viewportWidth);
 		cam.zoom = (float) MathUtils.clamp(cam.zoom, 10f, WORLD_WIDTH/cam.viewportWidth);
@@ -215,8 +230,9 @@ public class GameScreen implements Screen {
 	}
 	
 	public void dispose () {
+		mapSprite0.getTexture().dispose();
 		mapSprite1.getTexture().dispose();
-		mapSprite1.getTexture().dispose();
+		mapSprite2.getTexture().dispose();
 		batch.dispose();		
 	}
 
@@ -231,11 +247,11 @@ public class GameScreen implements Screen {
 		rocket.atualizaVelocidades(dt, gravidade);	
 			
 		////Limites X e Y de mapa
-		if (rocket.getY() < 20) {
-			rocket.setY(20);			
+		if (rocket.getY() < ALT_CHAO) {
+			rocket.setY(ALT_CHAO);			
 			rocket.setVelY(0);						
 			rocket.setVelX(h_spd*0.8 - 0.02);
-			if (rocket.getX() < 0.02) {
+			if (rocket.getY() < 0.02) {
 				rocket.setRotation(0);
 			}
 		}
@@ -288,7 +304,7 @@ public class GameScreen implements Screen {
 				estrelas[i].setPosition(x, y);
 			}
 			else {
-				estrelas[i].translateX(-h_spd*1.2f);	
+				estrelas[i].translateX(-h_spd*0.5f);	
 			}			
 		}
 		
@@ -300,6 +316,15 @@ public class GameScreen implements Screen {
 				nuvens[i].translateX(-h_spd);	
 			}			
 		}
+		
+		for (int i=0; i<nuvens_fundo.length; i++) {
+			if (nuvens_fundo[i].getX() < -50) {				
+				nuvens_fundo[i].setX(WORLD_WIDTH + 50);
+			}
+			else {
+				nuvens_fundo[i].translateX(-0.01f);	
+			}			
+		}		
 	}
 
 	
