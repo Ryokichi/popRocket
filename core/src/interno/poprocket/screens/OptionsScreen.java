@@ -17,7 +17,7 @@ public class OptionsScreen implements Screen {
 	private Stage     stage;
 
     public OptionsScreen(PopRocket popRocket) {
-    	System.out.println("Entrei no Menu Screen");
+    	System.out.println("Entrei option Screen");
 		this.parent = popRocket;
 		this.stage = new Stage(new ScreenViewport());
 		Gdx.input.setInputProcessor(stage);

@@ -17,7 +17,7 @@ public class LoadDataScreen implements Screen {
 	private Stage     stage;
 
     public LoadDataScreen (PopRocket popRocket) {
-    	System.out.println("Entrei no Menu Screen");
+    	System.out.println("Entrei load data Screen");
 		this.parent = popRocket;
 		this.stage = new Stage(new ScreenViewport());
 		Gdx.input.setInputProcessor(stage);

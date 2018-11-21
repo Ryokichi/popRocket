@@ -1,9 +1,5 @@
 package interno.poprocket.screens;
 
-import java.math.RoundingMode;
-import java.text.NumberFormat;
-import java.util.Locale;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
@@ -15,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 
+import interno.db.SqliteConn;
 import interno.poprocket.objetos.MinhasFuncoes;
 import interno.poprocket.objetos.Rocket;
 import interno.poprocket.objetos.criaObjetos;
@@ -22,26 +19,31 @@ import interno.poprocket.objetos.criaObjetos;
 
 public class GameScreen implements Screen {
     MinhasFuncoes mf = new MinhasFuncoes();
+    SqliteConn    db = new SqliteConn();
+    
     static final int WORLD_HEIGHT = 5000;
-	static final int WORLD_WIDTH  = 1000;
-	static final int MAX_VEL = 5;
-	static final float ALT_CHAO = 8f;
+	static final int WORLD_WIDTH  = 2000;
+	static final int MAX_VEL      = 10;
+	static final float ALT_CHAO   = 8f;
+	static final double GRAVIDADE = 3;
 	
 	
 	final PopRocket game;
 
 	private OrthographicCamera cam;
-	private SpriteBatch batch, batch2;
-	
-	private double dist_percorrida = 0;	
-	private double gravidade = 4;
-	private float  rotationSpeed;	
-	private float  h_spd = 0f;
-	private float  v_spd = 0f;
-    private int    score = 0;
+	private SpriteBatch batch, batch2;		
+	private float   rotationSpeed;	
+	private float   h_spd          = 0f;
+	private float   v_spd          = 0f;
+	private float   tempo_burst    = 0f;
+	private double dist_percorrida = 0;
+    private int     score          = 0;    
+    private boolean foi_lancado    = false;
+    private boolean plyr_controla  = false;
+    private boolean fim_jogo       = false;
 	
 	private Sprite  asteroides[], estrelas[], nuvens[], nuvens_fundo[];
-	private Sprite  mapSprite0, mapSprite1, mapSprite2;
+	private Sprite  mapSprite0, mapSprite1, mapSprite2, prop;
 	private Rocket  rocket;
 	
 	private BitmapFont font;
@@ -65,16 +67,20 @@ public class GameScreen implements Screen {
 		
 		mapSprite1 = new Sprite(new Texture(Gdx.files.internal("img/bkg.png")));
 		mapSprite1.setPosition(0, 0);
-		mapSprite1.setSize(WORLD_WIDTH+10, WORLD_HEIGHT/19);
+		mapSprite1.setSize(WORLD_WIDTH+10, WORLD_HEIGHT/10);
 		
 		mapSprite2 = new Sprite(new Texture(Gdx.files.internal("img/bkg.png")));
 		mapSprite2.setPosition(WORLD_WIDTH-2, 0);
-        mapSprite2.setSize(WORLD_WIDTH+10, WORLD_HEIGHT/19);
+        mapSprite2.setSize(WORLD_WIDTH+10, WORLD_HEIGHT/10);
 		
 		rocket = new Rocket();
-		rocket.setPosition(WORLD_WIDTH / 2f, 10);
+		rocket.setPosition(WORLD_WIDTH/20f, 10);
 		rocket.setSize(50,20);
-		rocket.setOrigin(0,10);		
+		rocket.setOrigin(0,10);
+		
+		prop = new Sprite(new Texture(Gdx.files.internal("img/prop.png")));		
+		prop.setSize(60, 50);
+		prop.setOrigin(60, 50/2);
 
 		// Constructs a new OrthographicCamera, using the given viewport width and height
 		// Height is multiplied by aspect ratio.
@@ -88,15 +94,26 @@ public class GameScreen implements Screen {
 		batch2 = new SpriteBatch();
 	}
 	
-	public void render(float dt) {	
+	public void render(float dt) {		
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		if (tempo_burst <=0) {
+		   this.prop.setScale(0);
+		} else {
+			tempo_burst -= dt;
+		}		
 		
-		////Funções auxiliares
-		handleInput(dt);
-		updateObjPos();
-		checkObjCollision();
-		checkLimitsForRocket(dt);
-				
+		if (!fim_jogo) {
+		    ////Funções auxiliares
+		    this.lerEntradas(dt);
+		    this.ajustarZoomCamera();
+		    this.checkLimitsForRocket(dt);
+		    if (foi_lancado) { 
+                this.updateObjPos(dt);
+		        this.checkObjCollision();
+		    }
+		}		
+		
+		////Desenha objetos na tela
 		cam.update();
 		batch.setProjectionMatrix(cam.combined);
 				
@@ -119,18 +136,32 @@ public class GameScreen implements Screen {
 		
 			for (int i = 0; i < estrelas.length; i++ ) {			
 				estrelas[i].draw(batch);			
-			}		
+			}
+
+			prop.draw(batch);
 			rocket.draw(batch);
 		batch.end();
-
-		this.imprimeTextos();
 		
+		this.imprimeTextos();		
+		rocket.atualizaVelocidades(dt, GRAVIDADE);
+	}
+	
+	private void ajustarZoomCamera() {
+        //cam.zoom = MathUtils.clamp(cam.zoom, 4f, WORLD_WIDTH/cam.viewportWidth);
+		cam.zoom = (float) MathUtils.clamp(cam.zoom, 1f, WORLD_WIDTH/cam.viewportWidth);
+
+		float effectiveViewportWidth  = cam.viewportWidth * cam.zoom;
+		float effectiveViewportHeight = cam.viewportHeight * cam.zoom;	
+				
+		//cam.position.x = MathUtils.clamp(rocket.getX(), effectiveViewportWidth  / 2f, WORLD_HEIGHT - effectiveViewportWidth  / 2f);
+		//cam.position.y = MathUtils.clamp(rocket.getY(), effectiveViewportHeight / 2f, WORLD_HEIGHT - effectiveViewportHeight / 2f);
+		
+		cam.position.x = WORLD_WIDTH/2;
+		cam.position.y = MathUtils.clamp(rocket.getY(), effectiveViewportHeight / 2f, WORLD_HEIGHT - effectiveViewportHeight / 2f);	
 	}
 	
 	private void imprimeTextos() {
 		batch2.begin();
-//		str = "Dist  : " + dist_percorrida;
-//        font.draw(batch2, str, 1000*0.01f, 600*0.99f);
         str = "Altura: " + rocket.getY();
         font.draw(batch2, str, 1000*0.01f, 470*0.99f);
         str = "Vel_abs:" + rocket.getVelocidadeAbs();
@@ -154,14 +185,40 @@ public class GameScreen implements Screen {
         batch2.end();
 	}
 	
-	private void handleInput(float dt) {
-		if (Gdx.input.isKeyPressed(Input.Keys.L)) {
-			rocket.setVelocidade(10, 10);
+	private void lerEntradas(float dt) {
+		////se foguete ainda não foi lancado e botão para lançar foi pressionado
+		////então foguete é lancado e player tem opcao de controlar
+		if (!foi_lancado && Gdx.input.isKeyPressed(Input.Keys.L)) {
+			rocket.setVelocidade(90, 90);
 			rocket.setRotation(45);
+			plyr_controla = true;
+			foi_lancado   = true;
+			tempo_burst = 1f;
+			this.prop.setScale(1);
+			
 		}
+		
+		if (Gdx.input.isKeyPressed(Input.Keys.L)) {
+			rocket.setVelocidade(90, 90);
+			rocket.setRotation(45);
+			plyr_controla = true;
+			foi_lancado   = true;
+			this.prop.setScale(1);
+			tempo_burst = 1f;
+		}
+		
+		if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+			rocket.acelerar(dt);
+			this.prop.setScale(1);
+		}
+		
+		if (!plyr_controla) return;
 		
 		if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
 			cam.zoom = 0;
+		}		
+		if (Gdx.input.isKeyPressed(Input.Keys.R)) {
+			db.atualiza(1, score, dist_percorrida);
 		}
 		if (Gdx.input.isKeyPressed(Input.Keys.S)) {
 			cam.zoom += 0.02;
@@ -176,10 +233,10 @@ public class GameScreen implements Screen {
 			//cam.translate(3, 0, 0);
 		}
 		if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {            
-			rocket.translateY(-v_spd);
+			//rocket.translateY(-v_spd);
 		}
 		if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
-			rocket.translateY(v_spd);
+			//rocket.translateY(v_spd);
 		}
 		if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
 			//cam.rotate(-rotationSpeed, 0, 0, 1);
@@ -189,31 +246,17 @@ public class GameScreen implements Screen {
 			//cam.rotate(rotationSpeed, 0, 0, 1);
 			rocket.rotate(-rotationSpeed);
 		}
-		if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-			rocket.acelerar(dt);
-		}
+		
 		if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
 			Gdx.app.exit();
 		}
-
-//		cam.zoom = MathUtils.clamp(cam.zoom, 4f, WORLD_WIDTH/cam.viewportWidth);
-		cam.zoom = (float) MathUtils.clamp(cam.zoom, 10f, WORLD_WIDTH/cam.viewportWidth);
-
-		//float effectiveViewportWidth  = cam.viewportWidth * cam.zoom;
-		float effectiveViewportHeight = cam.viewportHeight * cam.zoom;	
-				
-		//cam.position.x = MathUtils.clamp(rocket.getX(), effectiveViewportWidth  / 2f, WORLD_HEIGHT - effectiveViewportWidth  / 2f);
-		//cam.position.y = MathUtils.clamp(rocket.getY(), effectiveViewportHeight / 2f, WORLD_HEIGHT - effectiveViewportHeight / 2f);
-		
-		cam.position.x = rocket.getX();
-		cam.position.y = MathUtils.clamp(rocket.getY(), effectiveViewportHeight / 2f, WORLD_HEIGHT - effectiveViewportHeight / 2f);	
 	}
 	
 	
 	@Override
 	public void resize (int width, int height) {
-		cam.viewportWidth  = 100f;
-		cam.viewportHeight = 100f * height/width;
+		cam.viewportWidth  = WORLD_WIDTH;
+		cam.viewportHeight = WORLD_WIDTH * height/width;
 		cam.update();
 	}
 	
@@ -241,41 +284,43 @@ public class GameScreen implements Screen {
 		
 	}
 	
-	private void checkLimitsForRocket (float dt) {
-		dist_percorrida += h_spd * dt;		
-		
-		rocket.atualizaVelocidades(dt, gravidade);	
-			
+	private void checkLimitsForRocket (float dt) {			
 		////Limites X e Y de mapa
-		if (rocket.getY() < ALT_CHAO) {
-			rocket.setY(ALT_CHAO);			
-			rocket.setVelY(0);						
-			rocket.setVelX(h_spd*0.8 - 0.02);
-			if (rocket.getY() < 0.02) {
-				rocket.setRotation(0);
-			}
-		}
 		if (rocket.getY() > WORLD_HEIGHT-50) {
 			rocket.setY(WORLD_HEIGHT-50);
 			rocket.setRotation(0);
-		}
+		}		
+		if (rocket.getY() < ALT_CHAO) {			
+			rocket.setVelX(h_spd*0.8 - 0.02);
+			rocket.setVelY(0);			
+			if (rocket.getY() < (ALT_CHAO+0.02)) {
+				rocket.setRotation(0);
+			}
+			rocket.setY(ALT_CHAO);
+		}	
 
-		////Limites de velocidade
-		h_spd = (float)rocket.getVelX();
-		v_spd = (float)rocket.getVelY();
-		
-		if (v_spd < -MAX_VEL) rocket.setVelY(-MAX_VEL);
-		if (v_spd >  MAX_VEL) rocket.setVelY( MAX_VEL);
-		if (h_spd <        0) rocket.setVelX(0);		
-		if (h_spd > MAX_VEL*1.5) rocket.setVelX(MAX_VEL*1.5);
+		////Limites de velocidade		
+		if (rocket.getVelY() <    -MAX_VEL) rocket.setVelY(-MAX_VEL);
+		if (rocket.getVelY() >     MAX_VEL) rocket.setVelY( MAX_VEL);
+		if (rocket.getVelX() <           0) rocket.setVelX(0);		
+		if (rocket.getVelX() > MAX_VEL*1.5) rocket.setVelX(MAX_VEL*1.5);		
 		
 		////Limites de angulo		
-		if (rocket.getRotation() >  60) rocket.setRotation( 60);
-		if (rocket.getRotation() < -60) rocket.setRotation(-60);	
+		if (rocket.getRotation() >  75) rocket.setRotation( 75);
+		if (rocket.getRotation() < -45) rocket.setRotation(-45);		
 	}
 	
-	private void updateObjPos() {		
+	private void updateObjPos(float dt) {		
+		h_spd = (float)mf.d2(rocket.getVelX());
+		v_spd = (float)mf.d2(rocket.getVelY());
+		
+		dist_percorrida += (h_spd * dt);
+		dist_percorrida = mf.d2(dist_percorrida);
+		
 		rocket.translateY(v_spd);
+		prop.setPosition(this.rocket.getX()-this.prop.getWidth(), this.rocket.getY()-15);
+		prop.setRotation(this.rocket.getRotation());
+		
 		mapSprite1.translateX(-h_spd);
 		mapSprite2.translateX(-h_spd);
 		
@@ -287,24 +332,30 @@ public class GameScreen implements Screen {
 		}
 		
 		for (int i=0; i<asteroides.length; i++) {
-			if (asteroides[i].getX() < -50) {
+			if (asteroides[i].getX() < -50 || asteroides[i].getY() < 10) {
 				float x = MathUtils.random(WORLD_WIDTH+50, 2*WORLD_WIDTH);
 				float y = MathUtils.random(100, WORLD_HEIGHT);
 				asteroides[i].setPosition(x, y);
 			}
 			else {
-				asteroides[i].translateX(-h_spd*0.9f);	
+				asteroides[i].translateX(-(2+h_spd)*0.9f);
+				asteroides[i].translateY(-2);
 			}			
 		}
 		
 		for (int i=0; i<estrelas.length; i++) {
 			if (estrelas[i].getX() < -50) {
-				float x = MathUtils.random(WORLD_WIDTH+50, 2*WORLD_WIDTH);
-				float y = MathUtils.random(100, WORLD_HEIGHT);
+				float x = MathUtils.random(WORLD_WIDTH+50, WORLD_WIDTH*2);
+				float y = MathUtils.random(WORLD_HEIGHT/20, WORLD_HEIGHT);
+				estrelas[i].setPosition(x, y);
+			}
+			if (estrelas[i].getX() > WORLD_WIDTH*2) {
+				float x = MathUtils.random(WORLD_WIDTH+50, WORLD_WIDTH*2);
+				float y = MathUtils.random(WORLD_HEIGHT/20, WORLD_HEIGHT);
 				estrelas[i].setPosition(x, y);
 			}
 			else {
-				estrelas[i].translateX(-h_spd*0.5f);	
+				estrelas[i].translateX(5-h_spd);	
 			}			
 		}
 		
@@ -313,7 +364,7 @@ public class GameScreen implements Screen {
 				nuvens[i].setX(WORLD_WIDTH + 50);
 			}
 			else {
-				nuvens[i].translateX(-h_spd);	
+				nuvens[i].translateX(-h_spd*0.8f);	
 			}			
 		}
 		
@@ -322,7 +373,7 @@ public class GameScreen implements Screen {
 				nuvens_fundo[i].setX(WORLD_WIDTH + 50);
 			}
 			else {
-				nuvens_fundo[i].translateX(-0.01f);	
+				nuvens_fundo[i].translateX(-0.02f);	
 			}			
 		}		
 	}
@@ -332,23 +383,25 @@ public class GameScreen implements Screen {
 		for (int i=0; i<estrelas.length; i++) {
 			if (rocket.getBoundingRectangle().overlaps(estrelas[i].getBoundingRectangle())){
 				score = score + 1;
+				tempo_burst = 0.5f;
+				rocket.aumentaVel(5, 5);
+				prop.setScale(1);				
 				float x = MathUtils.random(WORLD_WIDTH+50, 2*WORLD_WIDTH);
-				float y = MathUtils.random(100, WORLD_HEIGHT);
+				float y = MathUtils.random(WORLD_HEIGHT/20, WORLD_HEIGHT);
 				estrelas[i].setPosition(x, y);
 			}
 		}
 		for (int i=0; i<asteroides.length; i++) {
 			if (rocket.getBoundingRectangle().overlaps(asteroides[i].getBoundingRectangle())) {
 				score = score -1;
+				rocket.aumentaVel(-1, 1);
 				float x = MathUtils.random(WORLD_WIDTH+50, 2*WORLD_WIDTH);
-				float y = MathUtils.random(100, WORLD_HEIGHT);
+				float y = MathUtils.random(WORLD_HEIGHT/20, WORLD_HEIGHT);
 				asteroides[i].setPosition(x, y);
-				if (score < 0)
-				{
+				if (score < 0) {
 					score = 0;
 				}
 			}
 		}
 	}
-
 }

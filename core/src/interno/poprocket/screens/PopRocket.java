@@ -12,14 +12,16 @@ public class PopRocket extends Game {
 	private LoadDataScreen loadDataScreen;
 	private CreditsScreen creditsScreen;
 	
-
-	
 	public final int LOADING   = 0;
 	public final int MENU      = 1;
 	public final int GAME      = 2;
 	public final int OPTIONS   = 3;
 	public final int LOAD_DATA = 4;	
 	public final int CREDITS   = 5;
+	
+	public int slot;
+	public int pontos;
+	public double dist_percorrida;
 	
 	public void changeScreen (int screen) {		
 		switch (screen) {		

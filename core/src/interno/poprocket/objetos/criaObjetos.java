@@ -17,7 +17,7 @@ public class criaObjetos {
 			
 			array_estrelas[i] = new Estrela(new Texture(Gdx.files.internal("img/estrela.png")));
 			array_estrelas[i].setPosition(x, y);
-			array_estrelas[i].setSize(15, 15);
+			array_estrelas[i].setSize(25, 25);
 		}
 		
 		return array_estrelas;		

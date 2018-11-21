@@ -17,7 +17,7 @@ public class CreditsScreen implements Screen {
 	private Stage     stage;
 
     public CreditsScreen(PopRocket popRocket) {
-    	System.out.println("Entrei no Menu Screen");
+    	System.out.println("Entrei no Credit Screen");
 		this.parent = popRocket;
 		this.stage = new Stage(new ScreenViewport());
 		Gdx.input.setInputProcessor(stage);

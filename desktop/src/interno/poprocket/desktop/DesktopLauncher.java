@@ -11,6 +11,7 @@ public class DesktopLauncher {
 //		db.consulta("SELECT * FROM pontuacao ");
 		db.createNewDataBase();
 		db.createNewTable();
+		db.consulta("SELECT * FROM pontos");
 		
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		new LwjglApplication(new PopRocket(), config);
