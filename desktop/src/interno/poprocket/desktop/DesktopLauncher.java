@@ -7,14 +7,17 @@ import interno.db.SqliteConn;
 
 public class DesktopLauncher {
 	public static void main (String[] arg) {
-		SqliteConn db = new SqliteConn();
+		//SqliteConn db = new SqliteConn();
 //		db.consulta("SELECT * FROM pontuacao ");
-		db.createNewDataBase();
-		db.createNewTable();
-		db.consulta("SELECT * FROM pontos");
+		//db.createNewDataBase();
+		//db.createNewTable();
+		//db.consulta("SELECT * FROM pontos");
 		
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		new LwjglApplication(new PopRocket(), config);
 		
+		config.width  = 1280;
+		config.height = 720;
+		config.title  = "PopRocket";		
 	}
 }

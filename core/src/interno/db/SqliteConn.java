@@ -41,6 +41,7 @@ public class SqliteConn {
 	}	
 	
 	public ResultSet consulta(String sql) {
+		System.out.println(sql);
 		Connection conn = null;
 		Statement  stmt = null;
 		ResultSet  rs   = null;
@@ -49,13 +50,13 @@ public class SqliteConn {
 			conn = this.conecta();
 			stmt = conn.createStatement();
 			rs   = stmt.executeQuery(sql);			
-			while (rs.next()) {
-				System.out.print("-> ");
-                System.out.println(rs.getInt("id") +  "\t" + 
-                                   rs.getInt("slot") + "\t" +
-                                   rs.getInt("pontos") + "\t" +
-                                   rs.getDouble("distancia"));
-            }        
+//			while (rs.next()) {
+//				System.out.print("-> ");
+//                System.out.println(rs.getInt("id") +  "\t" + 
+//                                   rs.getInt("slot") + "\t" +
+//                                   rs.getInt("pontos") + "\t" +
+//                                   rs.getDouble("distancia"));
+//            }        
 		
 		} catch (SQLException e) {            
 			e.printStackTrace();

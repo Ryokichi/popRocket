@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import interno.db.SqliteConn;
 import interno.poprocket.objetos.MinhasFuncoes;
@@ -21,7 +23,7 @@ public class GameScreen implements Screen {
     MinhasFuncoes mf = new MinhasFuncoes();
     SqliteConn    db = new SqliteConn();
     
-    static final int WORLD_HEIGHT = 5000;
+    static final int WORLD_HEIGHT = 10000;
 	static final int WORLD_WIDTH  = 2000;
 	static final int MAX_VEL      = 10;
 	static final float ALT_CHAO   = 8f;
@@ -33,14 +35,15 @@ public class GameScreen implements Screen {
 	private OrthographicCamera cam;
 	private SpriteBatch batch, batch2;		
 	private float   rotationSpeed;	
-	private float   h_spd          = 0f;
-	private float   v_spd          = 0f;
-	private float   tempo_burst    = 0f;
-	private double dist_percorrida = 0;
-    private int     score          = 0;    
-    private boolean foi_lancado    = false;
-    private boolean plyr_controla  = false;
-    private boolean fim_jogo       = false;
+	private float   h_spd           = 0f;
+	private float   v_spd           = 0f;
+	private float   tempo_burst     = 0f;
+	private double  dist_percorrida = 0;
+    private int     score           = 0;
+    private int     slot            = 0;
+    private boolean foi_lancado     = false;
+    private boolean plyr_controla   = false;
+    private boolean fim_jogo        = false;
 	
 	private Sprite  asteroides[], estrelas[], nuvens[], nuvens_fundo[];
 	private Sprite  mapSprite0, mapSprite1, mapSprite2, prop;
@@ -48,11 +51,17 @@ public class GameScreen implements Screen {
 	
 	private BitmapFont font;
 	private String str;
+	private Stage stage;
 	
 	
 	
 	public GameScreen (final PopRocket game) {
-		this.game = game;
+		this.game = game;		
+		this.stage = new Stage(new ScreenViewport());
+		
+		slot            = this.game.slot;
+		score           = this.game.pontos;
+		dist_percorrida = this.game.dist_percorrida;
 		
 		font          = new BitmapFont();		
 		rotationSpeed = 0.8f;	
@@ -67,11 +76,11 @@ public class GameScreen implements Screen {
 		
 		mapSprite1 = new Sprite(new Texture(Gdx.files.internal("img/bkg.png")));
 		mapSprite1.setPosition(0, 0);
-		mapSprite1.setSize(WORLD_WIDTH+10, WORLD_HEIGHT/10);
+		mapSprite1.setSize(WORLD_WIDTH+10, WORLD_HEIGHT/20);
 		
 		mapSprite2 = new Sprite(new Texture(Gdx.files.internal("img/bkg.png")));
 		mapSprite2.setPosition(WORLD_WIDTH-2, 0);
-        mapSprite2.setSize(WORLD_WIDTH+10, WORLD_HEIGHT/10);
+        mapSprite2.setSize(WORLD_WIDTH+10, WORLD_HEIGHT/20);
 		
 		rocket = new Rocket();
 		rocket.setPosition(WORLD_WIDTH/20f, 10);
@@ -218,7 +227,7 @@ public class GameScreen implements Screen {
 			cam.zoom = 0;
 		}		
 		if (Gdx.input.isKeyPressed(Input.Keys.R)) {
-			db.atualiza(1, score, dist_percorrida);
+			db.atualiza(slot, score, dist_percorrida);
 		}
 		if (Gdx.input.isKeyPressed(Input.Keys.S)) {
 			cam.zoom += 0.02;
@@ -248,7 +257,7 @@ public class GameScreen implements Screen {
 		}
 		
 		if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
-			Gdx.app.exit();
+			this.game.changeScreen(this.game.MENU);
 		}
 	}
 	
@@ -261,7 +270,8 @@ public class GameScreen implements Screen {
 	}
 	
 	public void show () {
-		
+		this.stage.clear();
+//		Gdx.input.setInputProcessor(stage);		
 	}
 	
 	public void hide () {

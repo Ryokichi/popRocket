@@ -1,6 +1,11 @@
 package interno.poprocket.screens;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import com.badlogic.gdx.Game;
+
+import interno.db.SqliteConn;
 
 
 
@@ -12,6 +17,8 @@ public class PopRocket extends Game {
 	private LoadDataScreen loadDataScreen;
 	private CreditsScreen creditsScreen;
 	
+	private SqliteConn db = new SqliteConn();
+	
 	public final int LOADING   = 0;
 	public final int MENU      = 1;
 	public final int GAME      = 2;
@@ -19,9 +26,11 @@ public class PopRocket extends Game {
 	public final int LOAD_DATA = 4;	
 	public final int CREDITS   = 5;
 	
-	public int slot;
-	public int pontos;
-	public double dist_percorrida;
+	public int slot = 0;
+	public int pontos = 0;
+	public double dist_percorrida = 0;
+	
+	public boolean debugMode = true;
 	
 	public void changeScreen (int screen) {		
 		switch (screen) {		
@@ -60,6 +69,27 @@ public class PopRocket extends Game {
 	
 	@Override
 	public void dispose() {
+		
+	}
+
+	public void cosultaDB(int i) {		
+		ResultSet rs = db.consulta("SELECT * FROM pontos WHERE slot = " + slot);
+    	try {
+			while (rs.next()) {
+				this.slot = rs.getInt("slot");
+				this.pontos = rs.getInt("pontos");
+				this.dist_percorrida = rs.getDouble("distancia");						
+				
+				System.out.print("-> ");
+			    System.out.println(rs.getInt("id") +  "\t" + 
+			                       rs.getInt("slot") + "\t" +
+			                       rs.getInt("pontos") + "\t" +
+			                       rs.getDouble("distancia"));
+			}			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 

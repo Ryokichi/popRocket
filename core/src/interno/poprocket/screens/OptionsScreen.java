@@ -19,26 +19,25 @@ public class OptionsScreen implements Screen {
     public OptionsScreen(PopRocket popRocket) {
     	System.out.println("Entrei option Screen");
 		this.parent = popRocket;
-		this.stage = new Stage(new ScreenViewport());
-		Gdx.input.setInputProcessor(stage);
+		this.stage = new Stage(new ScreenViewport());		
 	}
 
 	@Override
 	public void show() {
+		Gdx.input.setInputProcessor(stage);
+		
 		Table table = new Table();
 		table.setFillParent(true);
 		table.setDebug(true);
 		stage.addActor(table);		
 		
-		Skin skin = new Skin(Gdx.files.internal("skin/glassy-ui.json"));
-		
-		TextButton menu = new TextButton("Back", skin);
-        
-        table.add(menu).fillX().uniformX();
+		Skin skin = new Skin(Gdx.files.internal("skin/glassy-ui.json"));		
+		TextButton back_btn = new TextButton("Back", skin, "small");        
+        table.add(back_btn).fillX().uniformX();
 		table.row().pad(10, 0, 10, 0);
 		
 		
-		menu.addListener(new ChangeListener() {
+		back_btn.addListener(new ChangeListener() {
             @Override 
             public void changed(ChangeEvent event, Actor actor) { 
             	parent.changeScreen(parent.MENU);

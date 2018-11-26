@@ -5,6 +5,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
@@ -19,26 +20,47 @@ public class CreditsScreen implements Screen {
     public CreditsScreen(PopRocket popRocket) {
     	System.out.println("Entrei no Credit Screen");
 		this.parent = popRocket;
-		this.stage = new Stage(new ScreenViewport());
-		Gdx.input.setInputProcessor(stage);
+		this.stage = new Stage(new ScreenViewport());		
 	}
 
 	@Override
 	public void show() {
+		Gdx.input.setInputProcessor(stage);
+		
 		Table table = new Table();
 		table.setFillParent(true);
-		table.setDebug(true);
+		table.setDebug(parent.debugMode);
 		stage.addActor(table);		
 		
 		Skin skin = new Skin(Gdx.files.internal("skin/glassy-ui.json"));
+		TextButton backBtn = new TextButton("Back", skin);		
+		Label txtDesign = new Label("Design:", skin, "big");
+		Label txtCoding = new Label("Coding:", skin, "big");
+		Label bianca    = new Label("Bianca", skin,"big");
+		Label carol     = new Label("Caroline Goncalves de Felipe", skin,"big");
+		Label heitor    = new Label("Heitor Ryokichi Nakamura", skin,"big");
+		Label will      = new Label("William Marques", skin,"big");
 		
-		TextButton menu = new TextButton("Back", skin);
-        
-        table.add(menu).fillX().uniformX();
-		table.row().pad(10, 0, 10, 0);
+		table.row().pad(5,0,5,0);
+		table.add(txtDesign);		
+		table.row().pad(1,0,1,0);
+		table.add(bianca);
+		table.row().pad(1,0,1,0);
+		table.add(carol);
+		
+		table.row().pad(30,0,5,0);		
+		table.add(txtCoding);		
+		table.row().pad(1,0,1,0);
+		table.add(heitor);
+		table.row().pad(1,0,1,0);
+		table.add(will);
+		
+		table.row().pad(30,0,0,0);
+        table.add(backBtn);
 		
 		
-		menu.addListener(new ChangeListener() {			
+		
+        backBtn.addListener(new ChangeListener() {			
             @Override 
             public void changed(ChangeEvent event, Actor actor) {            	
             	parent.changeScreen(parent.MENU);
@@ -62,19 +84,16 @@ public class CreditsScreen implements Screen {
 
 	@Override
 	public void pause() {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void resume() {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void hide() {
-		// TODO Auto-generated method stub
 		
 	}
 

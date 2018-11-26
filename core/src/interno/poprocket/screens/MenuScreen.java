@@ -18,33 +18,36 @@ public class MenuScreen implements Screen {
 	public MenuScreen (PopRocket parent) {
 		System.out.println("Entrei no Menu Screen");
 		this.parent = parent;
-		this.stage = new Stage(new ScreenViewport());
-		Gdx.input.setInputProcessor(stage);
+		this.stage = new Stage(new ScreenViewport());		
 	}
 
 	@Override
 	public void show() {
+		Gdx.input.setInputProcessor(stage);
+		
 		Table table = new Table();
 		table.setFillParent(true);
-		table.setDebug(true);
+		table.setDebug(parent.debugMode);
 		stage.addActor(table);		
 		
-		Skin skin = new Skin(Gdx.files.internal("skin/glassy-ui.json"));
+		Skin skin = new Skin(Gdx.files.internal("skin/glassy-ui.json"));		
 		
-		TextButton newGame = new TextButton("New Game", skin);
-        TextButton load    = new TextButton("Load", skin);
-        TextButton exit    = new TextButton("Exit", skin);
-        TextButton credits = new TextButton("Credits", skin);
-        TextButton options = new TextButton("Options", skin);
+		String str = (this.parent.slot > 0)? "Continuar" : "Novo Jogo";
+		TextButton newGame = new TextButton(str, skin);
+        TextButton load    = new TextButton("Carregar", skin);
+        TextButton exit    = new TextButton("Sair", skin);
+        TextButton credits = new TextButton("Creditos", skin);
+        TextButton options = new TextButton("Opcoes", skin);
         
+        table.row().pad(10);
         table.add(newGame).fillX().uniformX();
-		table.row().pad(10, 0, 10, 0);
+        table.row().pad(10);
 		table.add(load).fillX().uniformX();
-		table.row();
+		table.row().pad(10);
 		table.add(options).fillX().uniformX();
-		table.row();
+		table.row().pad(10);
 		table.add(credits).fillX().uniformX();
-		table.row();
+		table.row().pad(10);
 		table.add(exit).fillX().uniformX();
 		
 		
@@ -58,14 +61,15 @@ public class MenuScreen implements Screen {
 
         newGame.addListener(new ChangeListener() {
             @Override 
-            public void changed(ChangeEvent event, Actor actor) { 
+            public void changed(ChangeEvent event, Actor actor) {            	
             	parent.changeScreen(parent.GAME);            	
             } 
         });
         
         load.addListener(new ChangeListener() {
             @Override 
-            public void changed(ChangeEvent event, Actor actor) { 
+            public void changed(ChangeEvent event, Actor actor) {
+            	stage.clear();
             	parent.changeScreen(parent.LOAD_DATA);
             } 
         });
@@ -101,20 +105,14 @@ public class MenuScreen implements Screen {
 
 	@Override
 	public void pause() {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
-	public void resume() {
-		// TODO Auto-generated method stub
-		
+	public void resume() {				
 	}
 
 	@Override
-	public void hide() {
-		// TODO Auto-generated method stub
-		
+	public void hide() {		
 	}
 
 	@Override
