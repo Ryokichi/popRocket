@@ -6,6 +6,10 @@ import java.sql.SQLException;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -13,6 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
 
 import interno.db.SqliteConn;
 
@@ -20,11 +25,20 @@ public class LoadDataScreen implements Screen {
 	final SqliteConn db = new SqliteConn();	
 	private PopRocket parent;
 	private Stage     stage;
+	private SpriteBatch batch;
+	private Sprite bkg;
 
     public LoadDataScreen (PopRocket popRocket) {
     	System.out.println("Entrei load data Screen");
-		this.parent = popRocket;
-		this.stage = new Stage(new ScreenViewport());
+		parent = popRocket;
+		
+		float w = Gdx.graphics.getWidth();
+		float h = Gdx.graphics.getHeight();		
+		this.bkg = new Sprite(new Texture(Gdx.files.internal("img/menu_bkg.png")));		
+		this.bkg.setSize(w, h*1.78f);
+		batch = new SpriteBatch();
+		
+		stage = new Stage(new ScreenViewport());
 		
 	}
 
@@ -91,6 +105,11 @@ public class LoadDataScreen implements Screen {
 	public void render(float delta) {
 		Gdx.gl.glClearColor(0f, 0f, 0f, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		
+		batch.begin();
+		this.bkg.draw(batch);
+		batch.end();
+		
 		stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1/30f));
 		stage.draw();		
 	}

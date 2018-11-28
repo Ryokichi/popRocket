@@ -2,55 +2,45 @@ package interno.poprocket.objetos;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 
 public class criaObjetos {
-	
-	public static Sprite[] Estrelas (int qtd) {
+	public static Sprite[] Latinhas(int qtd) {
+		int idx;
 		float x, y;
-		Estrela array_estrelas[] = new Estrela[qtd];
+		Sprite array_latinhas[] = new Sprite[qtd];
 		
-		for (int i = 0; i < array_estrelas.length; i++) {
-			x = MathUtils.random(1050, 2000);
-			y = MathUtils.random(300, 5000);
+		for (int i = 0; i < array_latinhas.length; i++) {
+			x = MathUtils.random(2050, 4000);
+			y = MathUtils.random(600, 6000);
 			
-			array_estrelas[i] = new Estrela(new Texture(Gdx.files.internal("img/estrela.png")));
-			array_estrelas[i].setPosition(x, y);
-			array_estrelas[i].setSize(25, 25);
-		}
-		
-		return array_estrelas;		
-	}
-	
-	public static Sprite[] Asteroides(int qtd) {
-		float x, y;
-		Sprite array_asteroides[] = new Sprite[qtd];
-		
-		for (int i = 0; i < array_asteroides.length; i++) {
-			x = MathUtils.random(1050, 2000);
-			y = MathUtils.random(300, 5000);
-			
-			array_asteroides[i] = new Sprite(new Texture(Gdx.files.internal("img/asteroide.png")));
-			array_asteroides[i].setPosition(x, y);
-			array_asteroides[i].setSize(20, 20);
+			idx = i % 2;
+			array_latinhas[i] = new Sprite(new Texture(Gdx.files.internal("img/latinha"+idx+".png")));
+			array_latinhas[i].setPosition(x, y);
+			array_latinhas[i].setScale(0.4f);
 		}		
-		return array_asteroides;
+		return array_latinhas;
 	}
 	
 	public static Sprite[] Nuvens(int qtd) {
-		float x, y;
+		float x, y, w, h;
 		int tipo;
 		Sprite array_nuvens[] = new Sprite[qtd];
 		
 		for (int i = 0; i < array_nuvens.length; i++) {
 			x = MathUtils.random(0, 1000);
-			y = MathUtils.random(300, 5000);
+			y = MathUtils.random(500, 5000);
 			tipo = MathUtils.random(1,3);
 			
 			array_nuvens[i] = new Sprite(new Texture(Gdx.files.internal("img/nuvem_0"+ tipo +".png")));
 			array_nuvens[i].setPosition(x, y);
 			
+			w = array_nuvens[i].getWidth();
+			h = array_nuvens[i].getHeight();
+			array_nuvens[i].setScale(3f);
 		}		
 		return array_nuvens;
 	}
@@ -68,5 +58,6 @@ public class criaObjetos {
 			
 		}		
 		return array_nuvens;
-	}
+	}	
+
 }

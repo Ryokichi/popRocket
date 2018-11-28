@@ -3,6 +3,8 @@ package interno.poprocket.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -14,8 +16,10 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import interno.db.SqliteConn;
+import interno.poprocket.objetos.Combustivel;
 import interno.poprocket.objetos.MinhasFuncoes;
 import interno.poprocket.objetos.Rocket;
+import interno.poprocket.objetos.Tampinhas;
 import interno.poprocket.objetos.criaObjetos;
 
 
@@ -23,8 +27,8 @@ public class GameScreen implements Screen {
     MinhasFuncoes mf = new MinhasFuncoes();
     SqliteConn    db = new SqliteConn();
     
-    static final int WORLD_HEIGHT = 10000;
-	static final int WORLD_WIDTH  = 2000;
+    static final int WORLD_WIDTH  = 2000;
+    static final int WORLD_HEIGHT = 10000;	
 	static final int MAX_VEL      = 10;
 	static final float ALT_CHAO   = 8f;
 	static final double GRAVIDADE = 3;
@@ -33,7 +37,7 @@ public class GameScreen implements Screen {
 	final PopRocket game;
 
 	private OrthographicCamera cam;
-	private SpriteBatch batch, batch2;		
+	private SpriteBatch batch, batch2, batch3;		
 	private float   rotationSpeed;	
 	private float   h_spd           = 0f;
 	private float   v_spd           = 0f;
@@ -44,29 +48,42 @@ public class GameScreen implements Screen {
     private boolean foi_lancado     = false;
     private boolean plyr_controla   = false;
     private boolean fim_jogo        = false;
-	
-	private Sprite  asteroides[], estrelas[], nuvens[], nuvens_fundo[];
+    
+    private Tampinhas [] tampinhas;
+	private Sprite  nuvens[], nuvens_fundo[], latinhas[];
 	private Sprite  mapSprite0, mapSprite1, mapSprite2, prop;
 	private Rocket  rocket;
 	
+	private Music bkg_snd;
+	private Sound col_lata, col_tampa, burst_snd;
+	
+	private boolean burst_playing = false;
+	
 	private BitmapFont font;
 	private String str;
-	private Stage stage;
+	private Stage stage, stage1;
 	
-	
+	private Combustivel combustivel;	
 	
 	public GameScreen (final PopRocket game) {
-		this.game = game;		
-		this.stage = new Stage(new ScreenViewport());
+		this.game = game;	
+		
+		burst_snd = Gdx.audio.newSound(Gdx.files.internal("audio/gas_vazando.mp3"));
+		col_lata  = Gdx.audio.newSound(Gdx.files.internal("audio/lata_acertada.mp3"));
+		col_tampa = Gdx.audio.newSound(Gdx.files.internal("audio/lata_abrindo.mp3"));
 		
 		slot            = this.game.slot;
 		score           = this.game.pontos;
 		dist_percorrida = this.game.dist_percorrida;
 		
 		font          = new BitmapFont();		
-		rotationSpeed = 0.8f;	
-		asteroides    = criaObjetos.Asteroides(10);
-		estrelas      = criaObjetos.Estrelas(100); 
+		rotationSpeed = 0.8f;
+		
+		tampinhas = new Tampinhas[80];
+		for (int i = 0; i < tampinhas.length; i++) {
+			tampinhas[i] = new Tampinhas(WORLD_WIDTH, WORLD_HEIGHT);		}
+		
+		latinhas      = criaObjetos.Latinhas(10);
 		nuvens        = criaObjetos.Nuvens(80);
 		nuvens_fundo  = criaObjetos.NuvensFundo(60);
 		
@@ -83,13 +100,13 @@ public class GameScreen implements Screen {
         mapSprite2.setSize(WORLD_WIDTH+10, WORLD_HEIGHT/20);
 		
 		rocket = new Rocket();
-		rocket.setPosition(WORLD_WIDTH/20f, 10);
-		rocket.setSize(50,20);
-		rocket.setOrigin(0,10);
+		rocket.setPosition(WORLD_WIDTH/17, 10);
+		rocket.setSize(100, 40);
+		rocket.setOrigin(0, rocket.getHeight()/2);
 		
 		prop = new Sprite(new Texture(Gdx.files.internal("img/prop.png")));		
-		prop.setSize(60, 50);
-		prop.setOrigin(60, 50/2);
+		prop.setSize(100, 80);
+		prop.setOrigin(100, 45);
 
 		// Constructs a new OrthographicCamera, using the given viewport width and height
 		// Height is multiplied by aspect ratio.
@@ -101,14 +118,29 @@ public class GameScreen implements Screen {
 
 		batch  = new SpriteBatch();
 		batch2 = new SpriteBatch();
+		
+		batch3 = new SpriteBatch();
+		
+		combustivel = new Combustivel(500,20);
+		combustivel.setPosition(Gdx.graphics.getWidth()/2 - 250, Gdx.graphics.getHeight()-50);
+		this.stage = new Stage(new ScreenViewport());
+		this.stage1 = new Stage();
+		stage1.addActor(combustivel);
 	}
 	
 	public void render(float dt) {		
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		if (tempo_burst <=0) {
 		   this.prop.setScale(0);
+		   burst_snd.stop();
+		   this.burst_playing = false;
+		   
 		} else {
 			tempo_burst -= dt;
+			if (!this.burst_playing) {
+				this.burst_playing = true;
+			    this.burst_snd.loop();
+			}
 		}		
 		
 		if (!fim_jogo) {
@@ -137,22 +169,31 @@ public class GameScreen implements Screen {
 			
 			for (int i = 0; i < nuvens.length; i++ ) {			
 				nuvens[i].draw(batch);			
-			}	
-		
-			for (int i = 0; i < asteroides.length; i++ ) {			
-				asteroides[i].draw(batch);			
 			}
-		
-			for (int i = 0; i < estrelas.length; i++ ) {			
-				estrelas[i].draw(batch);			
+			
+			for (int i = 0; i < latinhas.length; i++ ) {			
+				latinhas[i].draw(batch);			
 			}
-
+			
+			for (int i = 0; i < tampinhas.length; i++) {
+			    tampinhas[i].render(batch);
+			}
+			
 			prop.draw(batch);
 			rocket.draw(batch);
 		batch.end();
 		
 		this.imprimeTextos();		
 		rocket.atualizaVelocidades(dt, GRAVIDADE);
+		
+		batch3.begin();
+//		if (combustivel.diferenca() != 0 ) {
+//			combustivel.setValue(combustivel.combustivel);
+//        }
+		combustivel.setValue(combustivel.nivel());
+		stage1.draw();
+		stage1.act();
+		batch3.end();
 	}
 	
 	private void ajustarZoomCamera() {
@@ -170,27 +211,26 @@ public class GameScreen implements Screen {
 	}
 	
 	private void imprimeTextos() {
-		batch2.begin();
-        str = "Altura: " + rocket.getY();
-        font.draw(batch2, str, 1000*0.01f, 470*0.99f);
+		batch2.begin();        
         str = "Vel_abs:" + rocket.getVelocidadeAbs();
-        font.draw(batch2, str, 1000*0.01f, 470*0.96f);        
+        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.7f/40f);        
         str = "Vel_X : " + rocket.getVelX();
-        font.draw(batch2, str, 1000*0.01f, 470*0.93f);
+        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.6f/40f);
         str = "Vel_Y : " + rocket.getVelY();
-        font.draw(batch2, str, 1000*0.01f, 470*0.90f);
-
+        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.5f/40f);
         str = "Sust : " + rocket.sustentacao();
-        font.draw(batch2, str, 1000*0.01f, 470*0.87f);        
+        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.4f/40f);        
         str = "Drag X : " + rocket.arrastoX();
-        font.draw(batch2, str, 1000*0.01f, 470*0.84f);        
+        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.3f/40f);        
         str = "Drag Y : " + rocket.arrastoY();
-        font.draw(batch2, str, 1000*0.01f, 470*0.81f);
+        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.2f/40f);
         
+        str = "Altura: " + rocket.getY();
+        font.draw(batch2, str, WORLD_WIDTH*0.5f, WORLD_HEIGHT*2.8f/40f);
         str = "Dist  : " + dist_percorrida;
-        font.draw(batch2, str, 1000*0.4f, 470*0.99f);
+        font.draw(batch2, str, WORLD_WIDTH*0.5f, WORLD_HEIGHT*2.7f/40f);
         str = "Score: " + this.score;
-        font.draw(batch2, str, 1000*0.4f, 470*0.96f);
+        font.draw(batch2, str, WORLD_WIDTH*0.5f, WORLD_HEIGHT*2.6f/40f);
         batch2.end();
 	}
 	
@@ -205,23 +245,32 @@ public class GameScreen implements Screen {
 			tempo_burst = 1f;
 			this.prop.setScale(1);
 			
+			if (!this.burst_playing) {
+				this.burst_playing = true;
+			    this.burst_snd.loop();
+			}			
 		}
-		
-		if (Gdx.input.isKeyPressed(Input.Keys.L)) {
-			rocket.setVelocidade(90, 90);
-			rocket.setRotation(45);
-			plyr_controla = true;
-			foi_lancado   = true;
-			this.prop.setScale(1);
-			tempo_burst = 1f;
-		}
-		
-		if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-			rocket.acelerar(dt);
-			this.prop.setScale(1);
-		}
+
+		if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
+			System.out.println("ESC pressionado");
+			this.game.changeScreen(this.game.MENU);
+		}		
 		
 		if (!plyr_controla) return;
+		
+		if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+			if (this.combustivel.nivel() > 0) {
+			    rocket.acelerar(dt);
+			    this.prop.setScale(1);
+			    combustivel.consumir(dt);
+			
+			    if (!this.burst_playing) {
+				    tempo_burst = 0.5f;
+			     	this.burst_playing = true;
+			        this.burst_snd.loop();
+			    }
+			}
+		}
 		
 		if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
 			cam.zoom = 0;
@@ -256,9 +305,7 @@ public class GameScreen implements Screen {
 			rocket.rotate(-rotationSpeed);
 		}
 		
-		if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
-			this.game.changeScreen(this.game.MENU);
-		}
+		
 	}
 	
 	
@@ -271,7 +318,7 @@ public class GameScreen implements Screen {
 	
 	public void show () {
 		this.stage.clear();
-//		Gdx.input.setInputProcessor(stage);		
+		Gdx.input.setInputProcessor(stage);		
 	}
 	
 	public void hide () {
@@ -341,37 +388,39 @@ public class GameScreen implements Screen {
 			mapSprite2.setX(mapSprite1.getX() + WORLD_WIDTH-2);
 		}
 		
-		for (int i=0; i<asteroides.length; i++) {
-			if (asteroides[i].getX() < -50 || asteroides[i].getY() < 10) {
+		for (int i=0; i<tampinhas.length; i++) {
+			if (tampinhas[i].getX() < -50) {
+				float x = MathUtils.random(WORLD_WIDTH+50, WORLD_WIDTH*2);
+				float y = MathUtils.random(WORLD_HEIGHT/20, WORLD_HEIGHT);
+				tampinhas[i].setPosition(x, y);
+			}
+			if (tampinhas[i].getX() > WORLD_WIDTH*2) {
+				float x = MathUtils.random(WORLD_WIDTH+50, WORLD_WIDTH*2);
+				float y = MathUtils.random(WORLD_HEIGHT/20, WORLD_HEIGHT);
+				tampinhas[i].setPosition(x, y);
+			}
+			else {
+				tampinhas[i].translatePos(5-h_spd, 0);	
+			}			
+		}
+		
+		for (int i=0; i<latinhas.length; i++) {
+			if (latinhas[i].getX() < -50 || latinhas[i].getY() < 10) {
 				float x = MathUtils.random(WORLD_WIDTH+50, 2*WORLD_WIDTH);
 				float y = MathUtils.random(100, WORLD_HEIGHT);
-				asteroides[i].setPosition(x, y);
+				latinhas[i].setPosition(x, y);
 			}
 			else {
-				asteroides[i].translateX(-(2+h_spd)*0.9f);
-				asteroides[i].translateY(-2);
+				latinhas[i].translateX(-(2+h_spd)*0.9f);
+				latinhas[i].translateY(-2);
 			}			
 		}
-		
-		for (int i=0; i<estrelas.length; i++) {
-			if (estrelas[i].getX() < -50) {
-				float x = MathUtils.random(WORLD_WIDTH+50, WORLD_WIDTH*2);
-				float y = MathUtils.random(WORLD_HEIGHT/20, WORLD_HEIGHT);
-				estrelas[i].setPosition(x, y);
-			}
-			if (estrelas[i].getX() > WORLD_WIDTH*2) {
-				float x = MathUtils.random(WORLD_WIDTH+50, WORLD_WIDTH*2);
-				float y = MathUtils.random(WORLD_HEIGHT/20, WORLD_HEIGHT);
-				estrelas[i].setPosition(x, y);
-			}
-			else {
-				estrelas[i].translateX(5-h_spd);	
-			}			
-		}
+	
 		
 		for (int i=0; i<nuvens.length; i++) {
-			if (nuvens[i].getX() < -50) {				
-				nuvens[i].setX(WORLD_WIDTH + 50);
+			if (nuvens[i].getX() < - 200) {				
+				nuvens[i].setX(MathUtils.random(WORLD_WIDTH+150, WORLD_WIDTH*2));
+				nuvens[i].setY(MathUtils.random(500, WORLD_HEIGHT-100));
 			}
 			else {
 				nuvens[i].translateX(-h_spd*0.8f);	
@@ -390,28 +439,38 @@ public class GameScreen implements Screen {
 
 	
 	private void checkObjCollision() {
-		for (int i=0; i<estrelas.length; i++) {
-			if (rocket.getBoundingRectangle().overlaps(estrelas[i].getBoundingRectangle())){
+		
+		for (int i=0; i<tampinhas.length; i++) {
+			if (rocket.getBoundingRectangle().overlaps(tampinhas[i].getBoundingBox())){
+				col_tampa.play();
 				score = score + 1;
 				tempo_burst = 0.5f;
 				rocket.aumentaVel(5, 5);
-				prop.setScale(1);				
-				float x = MathUtils.random(WORLD_WIDTH+50, 2*WORLD_WIDTH);
-				float y = MathUtils.random(WORLD_HEIGHT/20, WORLD_HEIGHT);
-				estrelas[i].setPosition(x, y);
+				prop.setScale(1);
+				combustivel.addCombustivel(50);
+				
+				if (!this.burst_playing) {
+					this.burst_playing = true;
+				    this.burst_snd.play();
+				}
+				
+				tampinhas[i].setPosition(-1000, -100);
 			}
 		}
-		for (int i=0; i<asteroides.length; i++) {
-			if (rocket.getBoundingRectangle().overlaps(asteroides[i].getBoundingRectangle())) {
+		
+		for (int i=0; i<latinhas.length; i++) {
+			if (rocket.getBoundingRectangle().overlaps(latinhas[i].getBoundingRectangle())) {
+				col_lata.play();
 				score = score -1;
 				rocket.aumentaVel(-1, 1);
 				float x = MathUtils.random(WORLD_WIDTH+50, 2*WORLD_WIDTH);
 				float y = MathUtils.random(WORLD_HEIGHT/20, WORLD_HEIGHT);
-				asteroides[i].setPosition(x, y);
+				latinhas[i].setPosition(x, y);
 				if (score < 0) {
 					score = 0;
 				}
 			}
 		}
+		
 	}
 }

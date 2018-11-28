@@ -3,6 +3,9 @@ package interno.poprocket.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -14,11 +17,16 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 public class MenuScreen implements Screen {
 	private PopRocket parent;
 	private Stage     stage;
-	
+	private Sprite    bkg1, bkg2;
+	private SpriteBatch batch;
 	public MenuScreen (PopRocket parent) {
 		System.out.println("Entrei no Menu Screen");
 		this.parent = parent;
-		this.stage = new Stage(new ScreenViewport());		
+		this.stage = new Stage(new ScreenViewport());
+		
+		this.bkg1 = new Sprite(new Texture(Gdx.files.internal("img/menu_bkg.png")));		
+		this.bkg1.setSize(1280,1280);
+		batch = new SpriteBatch();
 	}
 
 	@Override
@@ -44,8 +52,8 @@ public class MenuScreen implements Screen {
         table.row().pad(10);
 		table.add(load).fillX().uniformX();
 		table.row().pad(10);
-		table.add(options).fillX().uniformX();
-		table.row().pad(10);
+//		table.add(options).fillX().uniformX();
+//		table.row().pad(10);
 		table.add(credits).fillX().uniformX();
 		table.row().pad(10);
 		table.add(exit).fillX().uniformX();
@@ -54,14 +62,15 @@ public class MenuScreen implements Screen {
 		// create button listeners
 	    exit.addListener(new ChangeListener() {
 		    @Override
-		    public void changed(ChangeEvent event, Actor actor) {
+		    public void changed(ChangeEvent event, Actor actor) {		    	
 		        Gdx.app.exit();				
             }
         });
 
         newGame.addListener(new ChangeListener() {
             @Override 
-            public void changed(ChangeEvent event, Actor actor) {            	
+            public void changed(ChangeEvent event, Actor actor) {
+            	stage.clear();            	
             	parent.changeScreen(parent.GAME);            	
             } 
         });
@@ -69,14 +78,15 @@ public class MenuScreen implements Screen {
         load.addListener(new ChangeListener() {
             @Override 
             public void changed(ChangeEvent event, Actor actor) {
-            	stage.clear();
+            	stage.clear();            
             	parent.changeScreen(parent.LOAD_DATA);
             } 
         });
         
         credits.addListener(new ChangeListener() {
             @Override 
-            public void changed(ChangeEvent event, Actor actor) { 
+            public void changed(ChangeEvent event, Actor actor) {
+            	stage.clear();
             	parent.changeScreen(parent.CREDITS);
             } 
         });
@@ -84,7 +94,8 @@ public class MenuScreen implements Screen {
         
         options.addListener(new ChangeListener() {
             @Override 
-            public void changed(ChangeEvent event, Actor actor) { 
+            public void changed(ChangeEvent event, Actor actor) {
+            	stage.clear();
             	parent.changeScreen(parent.OPTIONS);
             } 
         });
@@ -94,8 +105,14 @@ public class MenuScreen implements Screen {
 	public void render(float delta) {
 		Gdx.gl.glClearColor(0f, 0f, 0f, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		
+		batch.begin();
+		this.bkg1.draw(batch);
+		batch.end();		
+		
 		stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1/30f));
 		stage.draw();
+		
 	}
 
 	@Override

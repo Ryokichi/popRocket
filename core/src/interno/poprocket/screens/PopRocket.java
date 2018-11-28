@@ -4,12 +4,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 
 import interno.db.SqliteConn;
 
 
 
 public class PopRocket extends Game {
+	public boolean debugMode = false;
+	
 	private LoadingScreen loadingScreen;
 	private MenuScreen menuScreen;
 	private GameScreen gameScreen;
@@ -30,13 +35,20 @@ public class PopRocket extends Game {
 	public int pontos = 0;
 	public double dist_percorrida = 0;
 	
-	public boolean debugMode = true;
 	
-	public void changeScreen (int screen) {		
+	private Music rainMusic;
+	private Sound clickSnd;
+	
+	public void btnClicked() {
+		clickSnd.play();
+	}
+	
+	public void changeScreen (int screen) {
+		clickSnd.play();
 		switch (screen) {		
 		    case LOADING:
 		    	if (loadingScreen == null) loadingScreen = new LoadingScreen (this);
-		    	this.setScreen(loadingScreen);
+		    	this.setScreen(loadingScreen);		    	
 		    	break;
 		    case  MENU:
 		    	if (menuScreen == null) menuScreen = new MenuScreen (this);
@@ -62,17 +74,19 @@ public class PopRocket extends Game {
 	}
 
 	@Override
-	public void create() {		
+	public void create() {
+		clickSnd = Gdx.audio.newSound(Gdx.files.internal("audio/lata_abrindo.mp3"));
 		loadingScreen = new LoadingScreen(this);
 		setScreen(loadingScreen);		
 	}
 	
 	@Override
 	public void dispose() {
+		clickSnd.dispose();
 		
 	}
 
-	public void cosultaDB(int i) {		
+	public void cosultaDB(int slot) {		
 		ResultSet rs = db.consulta("SELECT * FROM pontos WHERE slot = " + slot);
     	try {
 			while (rs.next()) {
