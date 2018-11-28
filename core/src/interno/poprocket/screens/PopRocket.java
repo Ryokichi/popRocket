@@ -36,14 +36,12 @@ public class PopRocket extends Game {
 	public double dist_percorrida = 0;
 	
 	
-	private Music rainMusic;
-	private Sound clickSnd;
+	private Music bkgSnd;
+	private Sound clickSnd;	
 	
-	public void btnClicked() {
-		clickSnd.play();
-	}
 	
 	public void changeScreen (int screen) {
+		bkgSnd.play();
 		clickSnd.play();
 		switch (screen) {		
 		    case LOADING:
@@ -56,6 +54,7 @@ public class PopRocket extends Game {
 		    	break;
 		    case GAME:
 		    	if (gameScreen == null) gameScreen = new GameScreen (this);
+		    	bkgSnd.stop();
 		    	this.setScreen(gameScreen);
 		    	break;
 		    case OPTIONS:
@@ -75,6 +74,10 @@ public class PopRocket extends Game {
 
 	@Override
 	public void create() {
+		bkgSnd = Gdx.audio.newMusic(Gdx.files.internal("audio/Reaching_Altitude.mp3"));
+		bkgSnd.setLooping(true);
+		bkgSnd.play();
+		
 		clickSnd = Gdx.audio.newSound(Gdx.files.internal("audio/lata_abrindo.mp3"));
 		loadingScreen = new LoadingScreen(this);
 		setScreen(loadingScreen);		
@@ -82,6 +85,7 @@ public class PopRocket extends Game {
 	
 	@Override
 	public void dispose() {
+		bkgSnd.dispose();
 		clickSnd.dispose();
 		
 	}

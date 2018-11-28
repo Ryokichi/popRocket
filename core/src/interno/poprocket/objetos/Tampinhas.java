@@ -9,12 +9,11 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 
 public class Tampinhas {
-	private float x, y, width, height, sizeX, sizeY;
+	private float x=-100, y=-100, width, height, sizeX, sizeY;
 	
 	private float tempo = 0f;
 	
-	private int qtd;
-	private int worldWidth, worldHeight;	
+	private int qtd;	
 	
 	private Animation animation;	
 	private TextureRegion [][] tmp;
@@ -25,8 +24,6 @@ public class Tampinhas {
 	private Rectangle bounds;
 	
 	public Tampinhas (int w, int h) {		
-		this.worldWidth  = w;
-		this.worldHeight = h;		
 		
 		img = new Texture(Gdx.files.internal("img/tampinhas.png"));
 		tmp = TextureRegion.split(img, img.getWidth()/4, img.getHeight()/4);

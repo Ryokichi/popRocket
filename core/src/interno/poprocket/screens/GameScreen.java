@@ -68,9 +68,12 @@ public class GameScreen implements Screen {
 	public GameScreen (final PopRocket game) {
 		this.game = game;	
 		
+		bkg_snd   = Gdx.audio.newMusic(Gdx.files.internal("audio/Ice-in-the-Sky.mp3"));
+		bkg_snd.setLooping(true);
+		bkg_snd.play();
 		burst_snd = Gdx.audio.newSound(Gdx.files.internal("audio/gas_vazando.mp3"));
 		col_lata  = Gdx.audio.newSound(Gdx.files.internal("audio/lata_acertada.mp3"));
-		col_tampa = Gdx.audio.newSound(Gdx.files.internal("audio/lata_abrindo.mp3"));
+		col_tampa = Gdx.audio.newSound(Gdx.files.internal("audio/Powerup3.wav"));
 		
 		slot            = this.game.slot;
 		score           = this.game.pontos;
@@ -212,18 +215,18 @@ public class GameScreen implements Screen {
 	
 	private void imprimeTextos() {
 		batch2.begin();        
-        str = "Vel_abs:" + rocket.getVelocidadeAbs();
-        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.7f/40f);        
-        str = "Vel_X : " + rocket.getVelX();
-        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.6f/40f);
-        str = "Vel_Y : " + rocket.getVelY();
-        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.5f/40f);
-        str = "Sust : " + rocket.sustentacao();
-        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.4f/40f);        
-        str = "Drag X : " + rocket.arrastoX();
-        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.3f/40f);        
-        str = "Drag Y : " + rocket.arrastoY();
-        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.2f/40f);
+//        str = "Vel_abs:" + rocket.getVelocidadeAbs();
+//        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.7f/40f);        
+//        str = "Vel_X : " + rocket.getVelX();
+//        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.6f/40f);
+//        str = "Vel_Y : " + rocket.getVelY();
+//        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.5f/40f);
+//        str = "Sust : " + rocket.sustentacao();
+//        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.4f/40f);        
+//        str = "Drag X : " + rocket.arrastoX();
+//        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.3f/40f);        
+//        str = "Drag Y : " + rocket.arrastoY();
+//        font.draw(batch2, str, WORLD_WIDTH*0.01f, WORLD_HEIGHT*2.2f/40f);
         
         str = "Altura: " + rocket.getY();
         font.draw(batch2, str, WORLD_WIDTH*0.5f, WORLD_HEIGHT*2.8f/40f);
@@ -253,6 +256,7 @@ public class GameScreen implements Screen {
 
 		if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
 			System.out.println("ESC pressionado");
+			bkg_snd.stop();
 			this.game.changeScreen(this.game.MENU);
 		}		
 		
